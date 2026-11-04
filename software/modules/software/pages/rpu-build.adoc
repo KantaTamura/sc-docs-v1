@@ -41,8 +41,13 @@ You can create a PDI with Zephyr RTOS in it. The PDI, then, can be
 load from any boot device Versal supports.
 
 To create a PDI, you use `bootgen`.
+`bootgen` requires a `.bif` file.
+Use the example for your board revision below and a PDI for the same board revision and device.
 
-`bootgen` requires a `.bif` file. A sample `.bif` file is:
+=== Rev.A
+
+Rev.A boards use the plm included in the input pdi.
+Save the following as `mytest.bif`, replacing the PDI and Zephyr ELF paths with your own paths.
 
 [source]
 ----
@@ -60,7 +65,43 @@ new_bif:
 }
 ----
 
-Save it as, say, `mytest.bif`, then:
+=== Rev.B
+
+Rev.B boards require the patched PLM built with Yocto.
+First, download the PLM for your device using the command below.
+The following example downloads the PLM for a Rev.B board with VE2302I.
+For VE2302E, set `DEVICE=ve2302e` instead.
+
+[source, bash]
+----
+$ DEVICE=ve2302i
+$ curl -fL -o /path/to/plm.elf "https://downloads.spacecubics.com/products/scobc-v1/releases/latest/bootbin/plm-versal-scobc-v1-${DEVICE}-revb-sdt-full.elf"
+----
+
+Save the following as `mytest.bif`, replacing the PDI, PLM, and Zephyr ELF paths
+with your own paths.
+The `bootloader` entry replaces the PLM in the input PDI with the downloaded PLM.
+
+[source]
+----
+new_bif:
+{
+    image
+    {
+        { type = bootimage, file = /path/to/your.pdi }
+        { type = bootloader, file = /path/to/plm.elf }
+    }
+    image
+    {
+        name = apu_ss, id = 0x1c000000
+        { core = r5-lockstep, file = /path/to/myproject/zephyr/build/zephyr/zephyr.elf }
+    }
+}
+----
+
+=== Generating the Boot Image
+
+For either board revision, run `bootgen` from the directory containing `mytest.bif`:
 
 [source, bash]
 ----
